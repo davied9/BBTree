@@ -147,20 +147,25 @@ namespace BinaryTree
             Console.WriteLine("Depth of tree : {0}", tree.Depth());
             Console.WriteLine("tree Contains d31 {0} ? {1}", d31, tree.Contains(d31));
             Console.WriteLine("tree ContainsExactly d31 {0} ? {1}", d31, tree.ContainsExactly(d31));
-            //Console.WriteLine("Num of Brothers of d32 is {0}", tree.Match(d32).BrotherCount);
-            //Console.WriteLine("fist brother of d32 is {0}", tree.Match(d32).FirstBrother);
-            //Console.WriteLine("last of brother of d32 is {0}", tree.Match(d32).LastBrother);
-            //Console.WriteLine("next of brother of d32 is {0}", tree.Match(d32).NextBrother);
-            //Console.WriteLine("previous of brother of d32 is {0}", tree.Match(d32).PreviousBrother);
             Console.WriteLine("Count of nodes in this tree : {0}", tree.TotalCount);
             Console.WriteLine("Unique Count of nodes in this tree : {0}", tree.Count);
             Console.WriteLine("First node : {0}", tree.First());
             Console.WriteLine("Last node : {0}", tree.Last());
 
-            d31.num = 31;
-            d32.num = 32;
-            Console.WriteLine("\n\nAfter alter:");
-            Show(tree);
+            Console.WriteLine("\nBrother feature;");
+            Console.WriteLine("Num of Brothers of d32 is {0}", tree.Match(d32).brotherCount);
+            Console.WriteLine("fist brother of d32 is {0}", tree.Match(d32).firstBrother);
+            Console.WriteLine("last of brother of d32 is {0}", tree.Match(d32).lastBrother);
+            Console.WriteLine("next of brother of d32 is {0}", tree.Match(d32).nextBrother);
+            Console.WriteLine("previous of brother of d32 is {0}", tree.Match(d32).previousBrother);
+
+            Console.WriteLine("\nBrotherhood feature;");
+            Console.WriteLine("Num of Brothers of d32 is {0}", tree.Match(d32).BrotherCount);
+            Console.WriteLine("fist nBrotherhood of d32 is {0}", tree.Match(d32).FirstBrother);
+            Console.WriteLine("last of nBrotherhood of d32 is {0}", tree.Match(d32).LastBrother);
+            Console.WriteLine("next of nBrotherhood of d32 is {0}", tree.Match(d32).NextBrother);
+            Console.WriteLine("previous of nBrotherhood of d32 is {0}", tree.Match(d32).PreviousBrother);
+
 
             //  these are in file
             FileStream fs = new FileStream("tree.txt", FileMode.Create);
@@ -171,27 +176,70 @@ namespace BinaryTree
             Show(tree, sw);
             sw.Flush();
 
-            tree.LeftRotate();
-            sw.WriteLine("\n\nafter left rotation :");
+            //tree.LeftRotate();
+            //sw.WriteLine("\n\nafter left rotation :");
+            //sw.WriteLine(tree);
+            //Show(tree, sw);
+            //sw.Flush();
+
+            //tree.RightRotate();
+            //sw.WriteLine("\n\nafter right rotation :");
+            //sw.WriteLine(tree);
+            //Show(tree, sw);
+            //sw.Flush();
+            
+            
+            Data tmp;
+            //sw.WriteLine("\n\nafter remove 3 : {0} elements moved.", tree.Remove(d31));
+            sw.WriteLine("\n\nafter remove  {0} : {1} elements moved.", (tmp = new Data(0)), tree.Remove(tmp));
             sw.WriteLine(tree);
             Show(tree, sw);
             sw.Flush();
 
-            tree.RightRotate();
-            sw.WriteLine("\n\nafter right rotation :");
+            sw.WriteLine("\n\nafter remove  {0} : {1} elements moved.", (tmp = new Data(1)), tree.Remove(tmp));
             sw.WriteLine(tree);
             Show(tree, sw);
             sw.Flush();
 
-            tree.RightRotate();
-            sw.WriteLine("\n\nafter right rotation 2 time :");
+            sw.WriteLine("\n\nafter remove  {0} : {1} elements moved.", (tmp = new Data(2)), tree.Remove(tmp));
             sw.WriteLine(tree);
             Show(tree, sw);
             sw.Flush();
+
+            sw.WriteLine("\n\nafter remove  {0} : {1} elements moved.", (tmp = new Data(9)), tree.Remove(tmp));
+            sw.WriteLine(tree);
+            Show(tree, sw);
+            sw.Flush();
+
+            sw.WriteLine("\n\nafter remove  {0} : {1} elements moved.", (tmp = new Data(7)), tree.Remove(tmp));
+            sw.WriteLine(tree);
+            Show(tree, sw);
+            sw.Flush();
+
+            sw.WriteLine("\n\nafter re-add {0}.", (tmp = new Data(-1)));
+            tree.Add(tmp);
+            sw.WriteLine(tree);
+            Show(tree, sw);
+            sw.Flush();
+
+            Console.WriteLine("\n\ninfo after remove : ");
+            Console.WriteLine("size of tree is  : {0}, {1}", tree.Count, tree.TotalCount);
+            Console.WriteLine("depth of tree is  : {0}", tree.Depth());
+
+
+
 
             sw.Close(); sw = null;
             fs.Close(); fs = null;
-            
+
+
+            d31.num = 31;
+            d32.num = 32;
+            d33.num = 33;
+            d34.num = 34;
+            Console.WriteLine("\n\nAfter alter:");
+            Show(tree);
+
         }
 
         //  测试 \r，可以完成覆盖写的操作
@@ -323,7 +371,7 @@ namespace BinaryTree
     {
         public int Compare(Data d1, Data d2)
         {
-            Console.WriteLine("DataComparer.Compare called with {0} and {1}.", d1, d2);
+            //Console.WriteLine("DataComparer.Compare called with {0} and {1}.", d1, d2);
             int ret = d1.num - d2.num;
             //int ret = d2.num - d1.num;
             //if (0 == ret) ret = -1; // 关键行 ： 修改判断相等时的处理
