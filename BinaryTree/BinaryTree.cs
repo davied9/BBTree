@@ -389,7 +389,7 @@ namespace DAV
                 IComparable comparator = val as IComparable;
                 if (null == comparator) throw new Exception("[FATAL] BBTree.Add(T val) : val must implement IComparable interface.");
                 //  添加新节点
-                AddNodeRecur(new BBTreeNode<T>(val));
+                AddNode(new BBTreeNode<T>(val));
             }
             public void Add(BBTreeNode<T> node)     /* 添加节点 */
             {
@@ -399,7 +399,7 @@ namespace DAV
                 IComparable comparator = node.value as IComparable;
                 if (null == comparator) throw new Exception("[FATAL] BBTree.Add(T val) : val must implement IComparable interface.");
                 //  添加节点
-                AddNodeRecur(node);
+                AddNode(node);
             }
             public int  Remove(T val)               /* 删除该值的所有节点 */
             {
@@ -811,7 +811,7 @@ namespace DAV
                 }
                 return false;
             }
-            void AddNode(BBTreeNode<T> node)        /* 添加一个可用节点【循环方式】 */
+            void AddNodeRepMeth(BBTreeNode<T> node) /* 添加一个可用节点【循环方式】 */
             {
                 if (null == node) return;
                 node.tree = this;
@@ -881,18 +881,18 @@ namespace DAV
                     Maintain(p, Compare(node, p) < 0);
                 }
             }
-            void AddNodeRecur(BBTreeNode<T> node)   /* 递归方法插入节点 */
+            void AddNode(BBTreeNode<T> node)        /* 递归方法插入节点 */
             {
                 node.tree = this;
                 /*  第一个，作为根节点 */
                 if (AddRoot(node)) return;
                 //  Add && maintain
-                InsertRecur(root, node);
+                Insert(root, node);
                 //  count
                 ++total_count;
                 ++count;
             }
-            void InsertRecur(BBTreeNode<T> searchNode, BBTreeNode<T> nodeToAdd) /* 【不直接调用】递归方法插入节点的底层操作，仅作为 AddRecursively(BBTreeNode<T> node) 的底层辅助方法 */
+            void Insert(BBTreeNode<T> searchNode, BBTreeNode<T> nodeToAdd) /* 【不直接调用】递归方法插入节点的底层操作，仅作为 AddRecursively(BBTreeNode<T> node) 的底层辅助方法 */
             {
                 int comp = Compare(nodeToAdd, searchNode);
                 if (0 == comp)
@@ -907,7 +907,7 @@ namespace DAV
                 {
                     if (null != searchNode.right)
                     {
-                        InsertRecur(searchNode.right, nodeToAdd);
+                        Insert(searchNode.right, nodeToAdd);
                         Maintain(searchNode, false);
                     }
                     else
@@ -920,7 +920,7 @@ namespace DAV
                 {
                     if (null != searchNode.left)
                     {
-                        InsertRecur(searchNode.left, nodeToAdd);
+                        Insert(searchNode.left, nodeToAdd);
                         Maintain(searchNode, true);
                     }
                     else
@@ -930,7 +930,7 @@ namespace DAV
                     }
                 }
             }
-            int  RemoveRecur(BBTreeNode<T> searchNode,  T val)   /* 递归方法删除数据（删除该值的全部数据） */
+            int  Remove(BBTreeNode<T> searchNode,  T val)   /* 递归方法删除数据（删除该值的全部数据） */
             {
                 if (null == searchNode) return 0;
                 int comp = (val as IComparable).CompareTo(searchNode.value);
@@ -965,11 +965,11 @@ namespace DAV
                 }
                 else if (comp >0)
                 {
-                    res = RemoveRecur(searchNode.right, val);
+                    res = Remove(searchNode.right, val);
                 }
                 else    //  comp < 0
                 {
-                    res = RemoveRecur(searchNode.left, val);
+                    res = Remove(searchNode.left, val);
                 }
                 if (0 != res) searchNode.size -= res;
                 return res;
