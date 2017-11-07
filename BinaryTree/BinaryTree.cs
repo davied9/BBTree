@@ -434,15 +434,23 @@ namespace DAV
             {
                 return GetDepth(Root);
             }
-            public BBTreeNode<T> Search(T val)  /* 获取参数对应的节点 */ { return GetNode(val); }
-            public BBTreeNode<T> Match(T val)   /* 获取该参数节点（引用相等） */ { return GetExactNode(val); }
+            public BBTreeNode<T> Search(T val)  /* 获取参数对应的节点 */
+            {
+                if (null == val) return null;
+                return GetNode(root,val);
+            }
+            public BBTreeNode<T> Match(T val)   /* 获取该参数节点（引用相等） */
+            {
+                if (null == val) return null;
+                return GetExactNode(root, val);
+            }
             public bool Contains(T val)         /* 是否存在值 */
             {
-                return (null != GetNode(val));
+                return (null != GetNode(root,val));
             }
             public bool ContainsExactly(T val)  /* 是否存在该对象的引用（值对象结果可能异常） */
             {
-                return (null != GetExactNode(val));
+                return (null != GetExactNode(root,val));
             }
             public bool Contains(BBTreeNode<T> node)    /* 是否存在该节点 */
             {
@@ -845,7 +853,7 @@ namespace DAV
                     }
                     else // comparision == 0
                     {   //  插入兄弟链条末尾
-                        refnode.lastBrother.nextBrother = node;
+                        refnode.AddBrother(node);
                         node.size = 0;
                         --count;
                         break;
@@ -884,14 +892,15 @@ namespace DAV
             void Insert(BBTreeNode<T> searchNode, BBTreeNode<T> nodeToAdd)  /* 【不直接调用】递归方法插入节点的底层操作，
                 【不直接调用】仅作为 AddRecursively(BBTreeNode<T> node) 的底层辅助方法 */
             {
+                ++searchNode.size;
                 int comp = Compare(nodeToAdd, searchNode);
                 if (0 == comp)
                 {
                     searchNode.AddBrother( nodeToAdd );
+                    FixParentsSize(searchNode, -1);
                     --count;
                     return;
                 }
-                ++searchNode.size;
                 if (comp > 0)
                 {
                     if (null != searchNode.right)
@@ -920,10 +929,11 @@ namespace DAV
                 }
             }
             void Move(BBTreeNode<T> searchNode, BBTreeNode<T> nodeToMove)   /* 【不直接调用】递归方法移动节点，用于删除时，两侧节点均存在时候的操作，
-                【不直接调用】仅作为 Remove(BBTreeNode<T> searchNode,  T val) 底层辅助方法，不考虑 */
+                【不直接调用】仅作为 Remove(BBTreeNode<T> searchNode,  T val) 底层辅助方法，不考虑相等的情况，因为在应用场景不存在；解决思路——报错 */
             {
                 int comp = Compare(nodeToMove, searchNode);
-                if(comp > 0)
+                searchNode.size += nodeToMove.size;
+                if (comp > 0)
                 {
                     if(null != searchNode.right)
                         Move(searchNode.right, nodeToMove);
@@ -948,20 +958,27 @@ namespace DAV
             int  Remove(BBTreeNode<T> searchNode,  T val)       /* 递归方法删除数据（删除该值的全部数据） */
             {
                 if (null == searchNode) return 0;
-                int comp = (val as IComparable).CompareTo(searchNode.value);
-                int res = 0;
+                int comp = Compare(val, searchNode.value);
+                int nRemoved = 0;
                 if (comp > 0)
                 {
-                    res = Remove(searchNode.right, val);
+                    nRemoved = Remove(searchNode.right, val);
                     Maintain(searchNode, true);
                 }
                 else  if(comp < 0)
                 {
-                    res = Remove(searchNode.left, val);
+                    nRemoved = Remove(searchNode.left, val);
                     Maintain(searchNode, false);
                 }
                 else // if (0 == comp)
                 {
+                    //  update count
+                    nRemoved = searchNode.BrotherCount;
+                    --count;
+                    total_count -= nRemoved;
+                    //  update size
+                    FixParentsSize(searchNode, -1);
+                    //  remove node
                     if (searchNode.IsLeaf)
                     {
                         if (searchNode.IsRoot) root = null;
@@ -970,22 +987,18 @@ namespace DAV
                     else if (searchNode.IsFull)
                     {
                         if (searchNode.left.size < searchNode.right.size)
-                        {   //  左侧子树更小，那么把左子树添加到右子树的最前端，并且maintain；同时，右子树替代原来的节点，成为子树的顶层
+                        {   //  左侧子树更小，那么把左子树添加到右子树的最前端；同时，右子树替代原来的节点，成为子树的顶层
                             if (searchNode.IsRoot) root = searchNode.right;
                             else searchNode.SetParentChild(searchNode.right);
                             //  移动
                             Move(searchNode.right, searchNode.left);
-                            //  maintain
-                            Maintain(searchNode, false);
                         }
                         else
-                        {   //  右侧子树更小，那么把右子树添加到左子树的最后端，并且maintain； 同时，左子树替代原来的节点，成为子树的顶层
+                        {   //  右侧子树更小，那么把右子树添加到左子树的最后端； 同时，左子树替代原来的节点，成为子树的顶层
                             if (searchNode.IsRoot) root = searchNode.left;
                             else searchNode.SetParentChild(searchNode.left);
                             //  移动
                             Move(searchNode.left, searchNode.right);
-                            //  maintain
-                            Maintain(searchNode, true);
                         }
                     }   // if (searchNode.IsFull)
                     else if (null != searchNode.left)
@@ -998,32 +1011,55 @@ namespace DAV
                         if (searchNode.IsRoot) root = searchNode.right;
                         else searchNode.SetParentChild(searchNode.right);
                     }
-                    res = searchNode.BrotherCount;
-                    --count;
-                    total_count -= res;
-                    searchNode.tree = null;
+                    // dismiss brothers
+                    searchNode.Dismiss();
                 }
-
-                //if (0 != res) searchNode.size -= res;
-                return res;
+                return nRemoved;
+            }
+            void FixParentsSize(BBTreeNode<T> bottom, int fixVal)   /* include bottom */
+            {
+                BBTreeNode<T> p = bottom;
+                do { p.size += fixVal; }
+                while (null != (p = p.parent));
             }
             //  查询
-            BBTreeNode<T> GetNode(T val) /*  */
+            BBTreeNode<T> GetNode(BBTreeNode<T> searchNode, T val)
+            {
+                if (null == searchNode) return null;
+
+                int comp = Compare(val, searchNode.value);
+
+                if (0 == comp) return searchNode;
+                else if (comp < 0) return GetNode(searchNode.left, val);
+                else /*comp>0*/ return GetNode(searchNode.right, val);
+            }
+            BBTreeNode<T> GetExactNode(BBTreeNode<T> searchNode, T val)
+            {
+                if (null == searchNode) return null;
+
+                int comp = Compare(val, searchNode.value);
+
+                if (0 == comp) return searchNode.GetExactBrother(val);
+                else if (comp < 0) return GetExactNode(searchNode.left, val);
+                else /*comp>0*/ return GetExactNode(searchNode.right, val);
+
+            }
+            BBTreeNode<T> GetNodeRepMeth(T val) /*  */
             {
                 BBTreeNode<T> refnode = root;
                 while (true)
                 {
-                    int comparision = Compare(val, refnode.value);
-                    if (0 == comparision)
+                    int comp = Compare(val, refnode.value);
+                    if (0 == comp)
                         return refnode;
-                    else if (comparision > 0)
+                    else if (comp > 0)
                     {
                         if (null != refnode.right)
                             refnode = refnode.right;
                         else
                             return null;
                     }
-                    else if (comparision < 0)
+                    else if (comp < 0)
                     {
                         if (null != refnode.left)
                             refnode = refnode.left;
@@ -1032,9 +1068,9 @@ namespace DAV
                     }
                 }
             }
-            BBTreeNode<T> GetExactNode(T val) /*  */
+            BBTreeNode<T> GetExactNodeRepMeth(T val) /*  */
             {
-                BBTreeNode<T> exact = GetNode(val);
+                BBTreeNode<T> exact = GetNodeRepMeth(val);
                 if (null == exact) return null;
                 while (null != exact)
                 {
@@ -1106,7 +1142,7 @@ namespace DAV
             }
             public IEnumerator GetEnumerator()
             {
-                BBTreeNode<T> node = firstBrother;
+                BBTreeNode<T> node = FirstBrother();
                 yield return node.value;
                 while(null !=(node = node.nextBrother)) yield return node.value;
             }
@@ -1136,10 +1172,10 @@ namespace DAV
                     return tree.Root;
                 }
             }
-            public int Size { get { return firstBrother.size; } }
-            public BBTreeNode<T> Parent { get { return firstBrother.parent; } }
-            public BBTreeNode<T> Left { get { return firstBrother.left; } }
-            public BBTreeNode<T> Right { get { return firstBrother.right; } }
+            public int Size { get { return FirstBrother().size; } }
+            public BBTreeNode<T> Parent { get { return FirstBrother().parent; } }
+            public BBTreeNode<T> Left { get { return FirstBrother().left; } }
+            public BBTreeNode<T> Right { get { return FirstBrother().right; } }
             public bool IsLeaf { get { return (null == Left && null == Right); } }
             public bool IsFull  /* 儿孙满堂 */ { get { return (null != Left && null != Right); } }
             public bool IsRoot { get { return (null == Parent); } }
@@ -1163,11 +1199,9 @@ namespace DAV
                 }
             }
             /*  Brother 属性 */
-            public int BrotherCount { get { return firstBrother.brotherCount; } }
+            public int BrotherCount { get { return FirstBrother().brotherCount; } }
             public BBTreeNode<T> NextBrother { get { return nextBrother; } }
             public BBTreeNode<T> PreviousBrother { get { return previousBrother; } }
-            public BBTreeNode<T> FirstBrother { get { return firstBrother; } }
-            public BBTreeNode<T> LastBrother { get { return firstBrother.lastBrother; } }
             /*  二叉树特性操作属性 */
             internal T value { get; set; }
             internal BBTree<T> tree { get; set; } = null;
@@ -1204,60 +1238,38 @@ namespace DAV
             internal BBTreeNode<T> nextBrother
             {
                 get { return _nextBrother; }
-                set
-                {
-                    //  若配置为空，那么相当于把自己设置为队列尾巴
-                    if(null == value)
-                    {
-                        _firstBrother._lastBrother = this;
-                        _nextBrother = null;
-                        return;
-                    }
-                    //  其他情况，我们需要以下一个的 last 作为新的 last
-                    _firstBrother._lastBrother = value._lastBrother;
-                    _nextBrother = value;
-                }
             }
             internal BBTreeNode<T> previousBrother
             {
                 get { return _previousBrother; }
-                set
-                {
-                    //  若配置为空，那么相当于把自己设置为队首
-                    if(null == value)
-                    {
-                        _firstBrother = this;
-                        _previousBrother = null;
-                        return;
-                    }
-                    //  其他情况，我们将上一个的 first 作为新的 first
-                    _firstBrother = value._firstBrother;
-                    _previousBrother = value;
-                }
-            }
-            internal BBTreeNode<T> firstBrother
-            {
-                get { return _firstBrother; }
-            }
-            internal BBTreeNode<T> lastBrother
-            {
-                get { return _lastBrother; }
             }
             /*  brother 特性内部接口*/
+            internal BBTreeNode<T> FirstBrother()
+            {
+                BBTreeNode<T> node = this;
+                while(node._previousBrother != null)
+                {
+                    node = node._previousBrother;
+                }
+                return node;
+            }
+            internal BBTreeNode<T> LastBrother()
+            {
+                BBTreeNode<T> node = this;
+                while (node._nextBrother != null)
+                {
+                    node = node._nextBrother;
+                }
+                return node;
+            }
             internal void AddBrother(BBTreeNode<T> bro)     /* 不考虑 bro 可能存在的链表，仅添加当前兄弟到列表 */
             {
                 if (!bro.IsAlone()) throw new ArgumentIllegalException(
                     "[FATAL] DAV.DataStructure.BBTreeNode<T>.AddBrother(BBTreeNode<T> bro) : bro must be alone.");
-                //  front
-                bro._firstBrother = _firstBrother;
-                bro._previousBrother = _firstBrother.lastBrother;
-                //  back
-                //      nothing to do ....
-                //  firstbrother
-                _firstBrother._lastBrother._nextBrother = bro;
-                _firstBrother._lastBrother = bro;
+                //  shake hands
+                Contact(LastBrother(), bro);
                 //  count
-                ++_firstBrother._brotherCount;
+                ++FirstBrother()._brotherCount;
             }
             internal void JointBrotherhood(BBTreeNode<T> fb)    /* 与别的兄弟会结盟，当然我还是老大 */
             {
@@ -1272,6 +1284,17 @@ namespace DAV
 
                 return 0;
             }
+            internal BBTreeNode<T> GetExactBrother(T val)
+            {
+                BBTreeNode<T> bro = FirstBrother();
+                do
+                {
+                    if (ReferenceEquals(val, bro.value)) return bro;
+                }
+                while (null != (bro = bro._nextBrother));
+
+                return null;
+            }
             /*  内部使用接口 */
             internal BBTreeNode(T value)
             {
@@ -1281,22 +1304,33 @@ namespace DAV
                 IComparable comparator = value as IComparable;
                 if (null == comparator) throw new Exception(string.Format("[FATAL]  BinaryTreeNode<T>.BinaryTreeNode(T value) : Type {0} should implement IComparable interface.", typeof(T)));
                 this.value = value;
-                _firstBrother = this;
-                _lastBrother = this;
                 _brotherCount = 1;
             }
-            internal void Dispose()
+            internal void Dismiss()     /* 遣散整个兄弟会 */
             {
-                value = default(T);
-                tree = null;
-                size = 1;
-                _parent = null;
-                _left = null;
-                _right = null;
-                _nextBrother = null;
-                _previousBrother = null;
-                _firstBrother = null;
-                _lastBrother = null;
+                BBTreeNode<T> bro = FirstBrother();
+                BBTreeNode<T> next = bro._nextBrother;
+                while(next != null)
+                {
+                    bro.Dispose();
+                    bro = next;
+                    next = bro._nextBrother;
+                }
+                bro.Dispose();
+            }
+            internal void Usurp()       /* 从老大那里夺取兄弟会信息，并干掉老大 */
+            {
+                BBTreeNode<T> first = FirstBrother();
+                //  树相关信息
+                tree = first.tree;
+                size = first.size;
+                _parent = first._parent;
+                _left = first._left;
+                _right = first._right;
+                //  链表相关
+                _brotherCount = first._brotherCount - 1;
+                Contact(_previousBrother, _nextBrother);
+                Contact(this, first._nextBrother);
             }
             internal int SizeLeftRight()
             {
@@ -1362,18 +1396,31 @@ namespace DAV
             int _brotherCount = 0;
             BBTreeNode<T> _nextBrother = null;
             BBTreeNode<T> _previousBrother = null;
-            BBTreeNode<T> _firstBrother;
-            BBTreeNode<T> _lastBrother;
             /*  底层功能实现 */
             bool IsAlone()  /* 判定是否为孤胆英雄 */
             {
                 return (
-                    this == _firstBrother
-                    && this == _lastBrother
+                    1 == _brotherCount
                     && null == _nextBrother
                     && null == _previousBrother
-                    && 1 == _brotherCount
                     );
+            }
+            void Dispose()  /* 清场，破坏性极大，谨慎驾驶 */
+            {
+                value = default(T);
+                tree = null;
+                size = 0;
+                _parent = null;
+                _left = null;
+                _right = null;
+                _brotherCount = 0;
+                _nextBrother = null;
+                _previousBrother = null;
+            }
+            void Contact(BBTreeNode<T> pre, BBTreeNode<T> post) /* 将两个兄弟联络起来 */
+            {
+                if(null != pre) pre._nextBrother = post;
+                if(null != post) post._previousBrother = pre;
             }
         }
         

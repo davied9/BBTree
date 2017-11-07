@@ -9,6 +9,7 @@ using DAV.Utilities;
 using DAV.DataStructure;
 using System.IO;
 using PM = DAV.ProgramMonitor;
+using System.Diagnostics;
 
 namespace BinaryTree
 {
@@ -17,10 +18,11 @@ namespace BinaryTree
         static void Main(string[] args)
         {
             //TestCase000();
-            TestCase001();
+            //TestCase001();
             //TestCase002();
             //TestCase003();
             //TestCase004();
+            TestCase005();
             Console.ReadKey();
         }
 
@@ -124,6 +126,7 @@ namespace BinaryTree
         {
             Console.WriteLine("\n\nTest case 001 ####################################################### ");
             BBTree<Data> tree = new BBTree<Data>(new DataComparer());
+            Data tmp;
             //BBTree<Data> tree = new BBTree<Data>();
             int nums = 15;
             for(int ix = 0; ix < nums; ++ix)
@@ -144,9 +147,14 @@ namespace BinaryTree
 
             Console.WriteLine("\n\nInitialized :");
             Show(tree);
-            Console.WriteLine("Depth of tree : {0}", tree.Depth());
+            Console.WriteLine("\ninfo after remove : ");
+            Console.WriteLine("size of tree is  : {0}, {1}", tree.Count, tree.TotalCount);
+            Console.WriteLine("depth of tree is  : {0}", tree.Depth());
+
+            Console.WriteLine("\nDepth of tree : {0}", tree.Depth());
             Console.WriteLine("tree Contains d31 {0} ? {1}", d31, tree.Contains(d31));
             Console.WriteLine("tree ContainsExactly d31 {0} ? {1}", d31, tree.ContainsExactly(d31));
+            Console.WriteLine("tree ContainsExactly a new d3 {0} ? {1}", (tmp = new Data(3)), tree.ContainsExactly(tmp));
             Console.WriteLine("Count of nodes in this tree : {0}", tree.TotalCount);
             Console.WriteLine("Unique Count of nodes in this tree : {0}", tree.Count);
             Console.WriteLine("First node : {0}", tree.First());
@@ -154,17 +162,18 @@ namespace BinaryTree
 
             Console.WriteLine("\nBrother feature;");
             Console.WriteLine("Num of Brothers of d32 is {0}", tree.Match(d32).brotherCount);
-            Console.WriteLine("fist brother of d32 is {0}", tree.Match(d32).firstBrother);
-            Console.WriteLine("last of brother of d32 is {0}", tree.Match(d32).lastBrother);
+            Console.WriteLine("fist brother of d32 is {0}", tree.Match(d32).FirstBrother());
+            Console.WriteLine("last of brother of d32 is {0}", tree.Match(d32).LastBrother());
             Console.WriteLine("next of brother of d32 is {0}", tree.Match(d32).nextBrother);
             Console.WriteLine("previous of brother of d32 is {0}", tree.Match(d32).previousBrother);
 
             Console.WriteLine("\nBrotherhood feature;");
             Console.WriteLine("Num of Brothers of d32 is {0}", tree.Match(d32).BrotherCount);
-            Console.WriteLine("fist nBrotherhood of d32 is {0}", tree.Match(d32).FirstBrother);
-            Console.WriteLine("last of nBrotherhood of d32 is {0}", tree.Match(d32).LastBrother);
+            Console.WriteLine("fist nBrotherhood of d32 is {0}", tree.Match(d32).FirstBrother());
+            Console.WriteLine("last of nBrotherhood of d32 is {0}", tree.Match(d32).LastBrother());
             Console.WriteLine("next of nBrotherhood of d32 is {0}", tree.Match(d32).NextBrother);
             Console.WriteLine("previous of nBrotherhood of d32 is {0}", tree.Match(d32).PreviousBrother);
+            
 
 
             //  these are in file
@@ -189,35 +198,83 @@ namespace BinaryTree
             //sw.Flush();
             
             
-            Data tmp;
             //sw.WriteLine("\n\nafter remove 3 : {0} elements moved.", tree.Remove(d31));
-            sw.WriteLine("\n\nafter remove  {0} : {1} elements moved.", (tmp = new Data(0)), tree.Remove(tmp));
+            sw.WriteLine("\n\nafter remove  {0} : {1} elements moved.", 
+                (tmp = new Data(11)), tree.Remove(tmp));
             sw.WriteLine(tree);
             Show(tree, sw);
             sw.Flush();
 
-            sw.WriteLine("\n\nafter remove  {0} : {1} elements moved.", (tmp = new Data(1)), tree.Remove(tmp));
+            sw.WriteLine("\n\nafter remove  {0} : {1} elements moved.", 
+                (tmp = new Data(1)), tree.Remove(tmp));
             sw.WriteLine(tree);
             Show(tree, sw);
             sw.Flush();
 
-            sw.WriteLine("\n\nafter remove  {0} : {1} elements moved.", (tmp = new Data(2)), tree.Remove(tmp));
+            sw.WriteLine("\n\nafter remove  {0} : {1} elements moved.", 
+                (tmp = new Data(3)), tree.Remove(tmp));
             sw.WriteLine(tree);
             Show(tree, sw);
             sw.Flush();
 
-            sw.WriteLine("\n\nafter remove  {0} : {1} elements moved.", (tmp = new Data(9)), tree.Remove(tmp));
+            sw.WriteLine("\n\nafter remove  {0} : {1} elements moved.",
+                (tmp = new Data(2)), tree.Remove(tmp));
             sw.WriteLine(tree);
             Show(tree, sw);
             sw.Flush();
 
-            sw.WriteLine("\n\nafter remove  {0} : {1} elements moved.", (tmp = new Data(7)), tree.Remove(tmp));
+            sw.WriteLine("\n\nafter remove  {0} : {1} elements moved.", 
+                (tmp = new Data(9)), tree.Remove(tmp));
             sw.WriteLine(tree);
             Show(tree, sw);
             sw.Flush();
+
 
             sw.WriteLine("\n\nafter re-add {0}.", (tmp = new Data(-1)));
             tree.Add(tmp);
+            sw.WriteLine(tree);
+            Show(tree, sw);
+            sw.Flush();
+
+
+            sw.WriteLine("\n\nafter re-add {0}.", (tmp = new Data(3)));
+            tree.Add(tmp);
+            sw.WriteLine(tree);
+            Show(tree, sw);
+            sw.Flush();
+
+            sw.WriteLine("\n\nafter re-add {0}.", (tmp = new Data(-5)));
+            tree.Add(tmp);
+            sw.WriteLine(tree);
+            Show(tree, sw);
+            sw.Flush();
+            
+            sw.WriteLine("\n\nafter re-add {0}.", (tmp = new Data(6)));
+            tree.Add(tmp);
+            sw.WriteLine(tree);
+            Show(tree, sw);
+            sw.Flush();
+
+            sw.WriteLine("\n\nafter re-add {0}.", (tmp = new Data(7)));
+            tree.Add(tmp);
+            sw.WriteLine(tree);
+            Show(tree, sw);
+            sw.Flush();
+
+            sw.WriteLine("\n\nafter remove  {0} : {1} elements moved.", 
+                (tmp = new Data(10)), tree.Remove(tmp));
+            sw.WriteLine(tree);
+            Show(tree, sw);
+            sw.Flush();
+
+            sw.WriteLine("\n\nafter remove  {0} : {1} elements moved.", 
+                (tmp = new Data(12)), tree.Remove(tmp));
+            sw.WriteLine(tree);
+            Show(tree, sw);
+            sw.Flush();
+
+            sw.WriteLine("\n\nafter remove  {0} : {1} elements moved.",
+                (tmp = new Data(14)), tree.Remove(tmp));
             sw.WriteLine(tree);
             Show(tree, sw);
             sw.Flush();
@@ -311,7 +368,86 @@ namespace BinaryTree
             Console.WriteLine("Right  Aligned : {0}", al.alignRight("this_i"));
         }
 
+        /*  查看效率 */
+        static void TestCase005()
+        {
+            Console.WriteLine("\n\nTest case 004 ####################################################### ");
 
+            Stopwatch sw = new Stopwatch();
+            const int totalTimes = 100000;
+            Dictionary<int, Data> dict = new Dictionary<int, Data>();
+            BBTree<Data> tree = new BBTree<Data>(new DataComparer());
+            List<Data> ds = new List<Data>();
+            for(int n = 0; n<totalTimes; ++n)
+            {
+                ds.Add(new Data(n));
+            }
+            //  添加
+            sw.Restart();
+            for(int round = 0; round < totalTimes; ++round)
+            {
+                dict[round] =(ds[round]);
+            }
+            sw.Stop();
+            long dictAdd = sw.ElapsedMilliseconds;
+            sw.Restart();
+            for (int round = 0; round < totalTimes; ++round)
+            {
+                tree.Add(ds[round]);
+            }
+            sw.Stop();
+            long treeAdd = sw.ElapsedMilliseconds;
+            //  查询
+            sw.Restart();
+            for (int round = 0; round < totalTimes; ++round)
+            {
+                Data found = dict[ds[round].num] ;
+            }
+            sw.Stop();
+            long dictSearch = sw.ElapsedMilliseconds;
+            sw.Restart();
+            for (int round = 0; round < totalTimes; ++round)
+            {
+                bool found = tree.Contains(ds[round]);
+            }
+            sw.Stop();
+            long treeSearch = sw.ElapsedMilliseconds;
+            //  删除
+            sw.Restart();
+            for (int round = 0; round < totalTimes; ++round)
+            {
+                dict.Remove(ds[totalTimes - round - 1].num);
+            }
+            sw.Stop();
+            long dictDelete = sw.ElapsedMilliseconds;
+            sw.Restart();
+            for (int round = 0; round < totalTimes; ++round)
+            {
+                tree.Remove(ds[totalTimes - round - 1]);
+            }
+            sw.Stop();
+            long treeDelete = sw.ElapsedMilliseconds;
+            Console.WriteLine("             dictionary     tree");
+            Console.WriteLine("add time     {0}     {1}", dictAdd, treeAdd);
+            Console.WriteLine("search time  {0}     {1}", dictSearch, treeSearch);
+            Console.WriteLine("delete time  {0}     {1}", dictDelete, treeDelete);
+            Console.WriteLine();
+
+
+            ST st = ST.singleton;
+            StackFrame f = ST.st.GetFrame(0);
+            Console.WriteLine("Current file : {0}", f.GetFileName());
+            Console.WriteLine("Current line : {0}", f.GetFileLineNumber());
+            Console.WriteLine("Current Column : {0}", f.GetFileColumnNumber());
+            Console.WriteLine("Current function : {0}", f.GetMethod().Name);
+            StackTrace trace = new StackTrace();
+            StackFrame frame = trace.GetFrame(0);
+            Console.WriteLine("Current file : {0}", frame.GetFileName());
+            Console.WriteLine("Current line : {0}", frame.GetFileLineNumber());
+            Console.WriteLine("Current Column : {0}", frame.GetFileColumnNumber());
+            Console.WriteLine("Current function : {0}", frame.GetMethod().Name);
+
+        }
 
 
         static void Show(IEnumerable dataset, StreamWriter sw = null)
@@ -381,5 +517,23 @@ namespace BinaryTree
     public class NotComparable
     {
 
+    }
+    public class ST
+    {
+        public static ST singleton
+        {
+            get
+            {
+                if (null == _instance)
+                    _instance = new ST();
+                return _instance;
+            }
+        }
+        static ST _instance;
+        public static StackTrace st;
+        ST()
+        {
+            st = new StackTrace();
+        }
     }
 }
