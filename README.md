@@ -8,11 +8,12 @@ current status :
 	those are statistics of function:
 
 	time elapsed       dictionary    bbtree
-	add                5             577
-	search             1             103
-	delete             1             501
+	add                3             32
+	search             1             12
+	delete             1             25
 
 maybe the whole idea that don't use key is wrong from beginning
+related blog : http://blog.csdn.net/davied9/article/details/78472026
 
 this repository kept for study and introspection
 
